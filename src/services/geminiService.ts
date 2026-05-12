@@ -20,7 +20,10 @@ export async function chatWithBPJSStream(message: string, onChunk: (text: string
         Respond in clean Markdown. Use bold for emphasis. 
         For lists, provide numbering/bullets followed by a newline.
         If the question is not about BPJS Kesehatan, politely decline.
-        PENTING: Jawaban Anda harus maksimal 400 karakter!`,
+        PENTING: Jawaban Anda maksimal 400 karakter.
+        
+        WAJIB: Akhiri jawaban dengan JSON object di dalam block code markdown (\\\`\\\`\\\`json ... \\\`\\\`\\\`) dengan 3 pertanyaan lanjutan seperti ini:
+        {"followUp": ["Pertanyaan 1?", "Pertanyaan 2?", "Pertanyaan 3?"]}`,
       },
     });
 

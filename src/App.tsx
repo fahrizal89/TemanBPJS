@@ -21,7 +21,7 @@ export default function App() {
   return (
     <div className="flex min-h-screen bg-gray-50">
       {/* Sidebar */}
-      <aside className="w-64 bg-white border-r p-6 flex flex-col gap-6">
+      <aside className="w-64 bg-white border-r p-6 flex flex-col gap-6 sticky top-0 h-screen">
         <h2 className="text-xl font-bold text-gray-800">Menu</h2>
         <nav className="flex flex-col gap-2">
           <button 
