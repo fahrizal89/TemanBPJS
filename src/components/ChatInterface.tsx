@@ -68,10 +68,21 @@ export default function ChatInterface() {
         }
     }
 
+    // Auto-link URLs
+    const linkify = (text: string) => {
+        // Regex to match URLs that are not part of an existing markdown link [text](url)
+        const urlRegex = /(?<!\]\()(https?:\/\/[^\s<]+?)(?=[.,!?;:*]*(?:\s|$))/g;
+        return text.replace(urlRegex, (url) => `[${url}](${url})`);
+    };
+
     return (
         <div className="text-gray-800 text-sm space-y-3">
             <div className="space-y-2 [&>p]:mb-2 [&>ul]:list-disc [&>ul]:ml-4 [&>ol]:list-decimal [&>ol]:ml-4">
-                <Markdown>{mainContent}</Markdown>
+                <Markdown
+                    components={{
+                        a: ({node, ...props}) => <a {...props} target="_blank" rel="noopener noreferrer" className="text-emerald-600 underline" />
+                    }}
+                >{linkify(mainContent)}</Markdown>
             </div>
             {followUp.length > 0 && (
                 <div className="flex flex-wrap gap-2 pt-2">
