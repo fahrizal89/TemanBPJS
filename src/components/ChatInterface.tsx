@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, Loader2, Bot, User, Stethoscope } from 'lucide-react';
+import { Send, Loader2, Bot, User } from 'lucide-react';
+import Markdown from 'react-markdown';
 import { motion, AnimatePresence } from 'motion/react';
-import { chatWithBPJS } from '../services/geminiService';
+import { chatWithBPJSStream } from '../services/geminiService';
 
 export default function ChatInterface() {
   const [messages, setMessages] = useState<{ id: string; role: 'user' | 'bot'; text: string }[]>([
@@ -27,26 +28,27 @@ export default function ChatInterface() {
     setInput('');
     setIsLoading(true);
 
+    // Create an empty bot message
+    const botMessageId = (Date.now() + 1).toString();
+    setMessages(prev => [...prev, { id: botMessageId, role: 'bot', text: '' }]);
+
     try {
-      const responseText = await chatWithBPJS(userMessage.text);
-      const botMessage = { id: (Date.now() + 1).toString(), role: 'bot' as const, text: responseText };
-      setMessages(prev => [...prev, botMessage]);
+      await chatWithBPJSStream(userMessage.text, (chunk) => {
+        setMessages(prev => prev.map(msg => 
+          msg.id === botMessageId ? { ...msg, text: msg.text + chunk } : msg
+        ));
+      });
     } catch (error) {
-      setMessages(prev => [...prev, { id: 'error', role: 'bot', text: 'Maaf, terjadi kesalahan. Silakan coba lagi.' }]);
+      setMessages(prev => prev.map(msg => 
+        msg.id === botMessageId ? { ...msg, text: 'Maaf, terjadi kesalahan. Silakan coba lagi.' } : msg
+      ));
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50">
-      <header className="bg-white border-b p-4 flex items-center gap-3">
-        <div className="bg-emerald-600 p-2 rounded-full text-white">
-          <Stethoscope size={24} />
-        </div>
-        <h1 className="text-xl font-bold text-gray-800">BPJS Health Assistant</h1>
-      </header>
-
+    <div className="flex flex-col h-full bg-gray-50">
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         <AnimatePresence>
           {messages.map(message => (
@@ -61,7 +63,13 @@ export default function ChatInterface() {
                     {message.role === 'bot' ? <Bot size={18} /> : <User size={18} />}
                 </div>
                 <div className={`p-3 rounded-2xl ${message.role === 'user' ? 'bg-emerald-600 text-white' : 'bg-white border border-gray-200 text-gray-800'}`}>
-                  {message.text}
+                  {message.role === 'bot' ? (
+                    <div className="text-gray-800 text-sm space-y-2 [&>p]:mb-2 [&>ul]:list-disc [&>ul]:ml-4 [&>ol]:list-decimal [&>ol]:ml-4">
+                      <Markdown>{message.text}</Markdown>
+                    </div>
+                  ) : (
+                    message.text
+                  )}
                 </div>
               </div>
             </motion.div>
