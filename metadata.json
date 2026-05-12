@@ -1,0 +1,6 @@
+{
+  "name": "BPJS Health Assistant",
+  "description": "An interactive chatbot providing information about BPJS Kesehatan services.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
