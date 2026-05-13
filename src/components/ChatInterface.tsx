@@ -2,13 +2,13 @@ import { useState, useRef, useEffect } from 'react';
 import { Send, Loader2, User } from 'lucide-react';
 import Markdown from 'react-markdown';
 import { motion, AnimatePresence } from 'motion/react';
-import { chatWithBPJSStream } from '../services/geminiService';
+import { chatWithBPJS } from '../services/geminiService';
 
 import botAvatar from '../../assets/pp_llm.png';
 
 export default function ChatInterface() {
-  const [messages, setMessages] = useState<{ id: string; role: 'user' | 'bot'; text: string }[]>([
-    { id: '1', role: 'bot', text: 'Halo! Saya asisten virtual BPJS Kesehatan. Ada yang bisa saya bantu hari ini terkait layanan BPJS?\n\n```json\n{"followUp": ["Apakah operasi caesar saya ditanggung?", "Berapa selisih biaya kalau naik ke kelas 1?", "Apakah perawatan gigi bungsu ditanggung?"]}\n```' }
+  const [messages, setMessages] = useState<{ id: string; role: 'user' | 'bot'; text: string; isTyping?: boolean }[]>([
+    { id: '1', role: 'bot', text: 'Halo! Saya asisten virtual BPJS Kesehatan. Ada yang bisa saya bantu hari ini terkait layanan BPJS?\n\n```json\n{"followUp": ["Apakah operasi caesar saya ditanggung?", "Berapa selisih biaya kalau naik ke kelas 1?", "Apakah perawatan gigi bungsu ditanggung?"]}\n```', isTyping: false }
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -35,17 +35,16 @@ export default function ChatInterface() {
 
     // Create an empty bot message
     const botMessageId = (Date.now() + 1).toString();
-    setMessages(prev => [...prev, { id: botMessageId, role: 'bot', text: '' }]);
+    setMessages(prev => [...prev, { id: botMessageId, role: 'bot', text: '', isTyping: true }]);
 
     try {
-      await chatWithBPJSStream(userMessage.text, (chunk) => {
-        setMessages(prev => prev.map(msg => 
-          msg.id === botMessageId ? { ...msg, text: msg.text + chunk } : msg
-        ));
-      });
+      const response = await chatWithBPJS(userMessage.text);
+      setMessages(prev => prev.map(msg => 
+        msg.id === botMessageId ? { ...msg, text: response, isTyping: false } : msg
+      ));
     } catch (error) {
       setMessages(prev => prev.map(msg => 
-        msg.id === botMessageId ? { ...msg, text: 'Maaf, terjadi kesalahan. Silakan coba lagi.' } : msg
+        msg.id === botMessageId ? { ...msg, text: 'Maaf, terjadi kesalahan. Silakan coba lagi.', isTyping: false } : msg
       ));
     } finally {
       setIsLoading(false);
@@ -113,11 +112,16 @@ export default function ChatInterface() {
               className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               <div className={`flex gap-3 max-w-[80%] ${message.role === 'user' ? 'flex-row-reverse' : ''}`}>
-                <div className={`p-1 rounded-full h-8 w-8 mt-1 flex items-center justify-center ${message.role === 'user' ? 'bg-emerald-100 text-emerald-700' : 'bg-stone-200 text-gray-600'}`}>
+                <div className={`p-1 rounded-full h-8 w-8 mt-1 shrink-0 flex items-center justify-center ${message.role === 'user' ? 'bg-emerald-100 text-emerald-700' : 'bg-stone-200 text-gray-600'}`}>
                     {message.role === 'bot' ? <img src={botAvatar} alt="Consultant" className="w-full h-full rounded-full object-cover" /> : <User size={18} />}
                 </div>
                 <div className={`p-3 rounded-2xl ${message.role === 'user' ? 'bg-emerald-600 text-white' : 'bg-white border border-gray-200 text-gray-800'}`}>
-                  {message.role === 'bot' ? (
+                  {message.role === 'bot' && message.isTyping ? (
+                    <div className="flex items-center gap-2">
+                        <Loader2 size={18} className="animate-spin text-gray-600" />
+                        <span className="text-sm text-gray-600">Mengetik...</span>
+                    </div>
+                  ) : message.role === 'bot' ? (
                     renderBotMessage(message.text)
                   ) : (
                     message.text
@@ -126,14 +130,6 @@ export default function ChatInterface() {
               </div>
             </motion.div>
           ))}
-          {isLoading && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-start">
-              <div className="flex gap-3 items-center bg-gray-200 p-3 rounded-2xl">
-                <Loader2 size={18} className="animate-spin text-gray-600" />
-                <span className="text-sm text-gray-600">Mengetik...</span>
-              </div>
-            </motion.div>
-          )}
         </AnimatePresence>
         <div ref={messagesEndRef} />
       </div>

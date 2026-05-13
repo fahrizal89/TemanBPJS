@@ -43,6 +43,9 @@ export default function App() {
 
       {/* Main Content */}
       <main className="flex-1">
+        <header className="bg-white border-b p-6 shadow-sm">
+            <h1 className="text-2xl font-bold text-gray-800">Konselor BPJS</h1>
+        </header>
         {activeMenu === 'chat' ? (
           <ChatInterface />
         ) : (

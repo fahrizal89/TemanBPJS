@@ -2,7 +2,7 @@ import { GoogleGenAI } from "@google/genai";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-export async function chatWithBPJSStream(message: string, onChunk: (text: string) => void) {
+export async function chatWithBPJS(message: string): Promise<string> {
   try {
     const chat = ai.chats.create({
       model: "gemini-3-flash-preview",
@@ -28,12 +28,8 @@ export async function chatWithBPJSStream(message: string, onChunk: (text: string
       },
     });
 
-    const result = await chat.sendMessageStream({ message });
-    for await (const chunk of result) {
-      if (chunk.text) {
-        onChunk(chunk.text);
-      }
-    }
+    const result = await chat.sendMessage({ message });
+    return result.text || '';
   } catch (error) {
     console.error("Error communicating with Gemini API:", error);
     throw error;
