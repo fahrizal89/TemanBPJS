@@ -20,8 +20,8 @@ export default function App() {
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      {/* Sidebar */}
-      <aside className="w-64 bg-white border-r p-6 flex flex-col gap-6 sticky top-0 h-screen">
+      {/* Sidebar - Hidden on mobile, visible on medium screens and up */}
+      <aside className="hidden md:flex w-64 bg-white border-r p-6 flex-col gap-6 sticky top-0 h-screen">
         <h2 className="text-xl font-bold text-gray-800">Menu</h2>
         <nav className="flex flex-col gap-2">
           <button 
@@ -42,9 +42,17 @@ export default function App() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1">
-        <header className="bg-white border-b p-6 shadow-sm">
+      <main className="flex-1 overflow-y-auto h-screen">
+        <header className="bg-white border-b p-6 shadow-sm flex items-center justify-between">
             <h1 className="text-2xl font-bold text-gray-800">Teman BPJS</h1>
+            {/* Mobile toggle - visible only on mobile */}
+            <button
+                onClick={() => setActiveMenu(activeMenu === 'help' ? 'chat' : 'help')}
+                className={`md:hidden flex items-center gap-2 px-3 py-1 text-sm rounded-lg ${activeMenu === 'help' ? 'bg-emerald-100 text-emerald-700' : 'text-gray-600 hover:bg-gray-100'}`}
+            >
+                {activeMenu === 'help' ? <MessageSquare size={16} /> : <HelpCircle size={16} />}
+                {activeMenu === 'help' ? 'Chat' : 'Tentang'}
+            </button>
         </header>
         {activeMenu === 'chat' ? (
           <ChatInterface />
