@@ -128,21 +128,23 @@ export default function ChatInterface() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-gray-50">
+    <div className="flex flex-col h-full bg-white">
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         <AnimatePresence>
           {messages.map(message => (
             <motion.div
               key={message.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ type: "spring", stiffness: 200, damping: 20 }}
+              style={{ transformOrigin: message.role === 'user' ? 'bottom right' : 'bottom left' }}
               className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               <div className={`flex gap-3 max-w-[80%] ${message.role === 'user' ? 'flex-row-reverse' : ''}`}>
-                <div className={`p-1 rounded-full h-8 w-8 mt-1 shrink-0 flex items-center justify-center ${message.role === 'user' ? 'bg-emerald-100 text-emerald-700' : 'bg-stone-200 text-gray-600'}`}>
+                <div className={`p-1 rounded-full h-8 w-8 mt-1 shrink-0 flex items-center justify-center ${message.role === 'user' ? 'hidden' : 'bg-stone-200 text-gray-600'}`}>
                     {message.role === 'bot' ? <img src={botAvatar} alt="Consultant" className="w-full h-full rounded-full object-cover" /> : <User size={18} />}
                 </div>
-                <div className={`p-3 rounded-2xl ${message.role === 'user' ? 'bg-emerald-600 text-white' : 'bg-white border border-gray-200 text-gray-800'}`}>
+                <div className={`p-3 rounded-2xl ${message.role === 'user' ? 'bg-[#007AFF] text-white' : 'bg-[#E9E9EB] text-black'}`}>
                   {message.role === 'bot' && message.isTyping ? (
                     <div className="flex items-center gap-2">
                         <Loader2 size={18} className="animate-spin text-gray-600" />
@@ -169,12 +171,12 @@ export default function ChatInterface() {
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleSend(input)}
             placeholder="Tanyakan layanan BPJS di sini..."
-            className="flex-1 border rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="flex-1 border border-gray-300 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#007AFF]"
           />
           <button
             onClick={() => handleSend(input)}
             disabled={isLoading || !input.trim()}
-            className="bg-emerald-600 text-white p-3 rounded-full hover:bg-emerald-700 disabled:bg-gray-400"
+            className="bg-[#007AFF] text-white p-3 rounded-full hover:bg-blue-600 disabled:bg-gray-400"
           >
             <Send size={18} />
           </button>
