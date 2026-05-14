@@ -3,16 +3,26 @@ import { Send, Loader2, User } from 'lucide-react';
 import Markdown from 'react-markdown';
 import { motion, AnimatePresence } from 'motion/react';
 import { chatWithBPJS } from '../services/geminiService';
+import { initialMessage } from '../services/instructions';
 
 import botAvatar from '../../assets/pp_llm.png';
 
 export default function ChatInterface() {
   const [messages, setMessages] = useState<{ id: string; role: 'user' | 'bot'; text: string; isTyping?: boolean }[]>([
-    { id: '1', role: 'bot', text: 'Halo! Saya asisten virtual BPJS Kesehatan. Ada yang bisa saya bantu hari ini terkait layanan BPJS?\n\n```json\n{"followUp": ["Apakah operasi caesar saya ditanggung?", "Berapa selisih biaya kalau naik ke kelas 1?", "Apakah perawatan gigi bungsu ditanggung?"]}\n```', isTyping: false }
+    { id: '1', role: 'bot', text: initialMessage, isTyping: false }
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const subQuestions: Record<string, string> = {
+    "🏥 Rawat Inap": "Boleh tahu lebih detail? Apa keluhan atau kondisi yang mengharuskan rawat inap?",
+    "🔪 Operasi / Tindakan": "Tindakan operasi apa yang direncanakan? Apakah untuk kondisi darurat atau terencana?",
+    "💊 Obat": "Bisa disebutkan nama obat atau kondisi penyakit yang membutuhkan obat tersebut?",
+    "💳 Iuran & Denda": "Apakah terkait cara pembayaran, cek tunggakan, atau prosedur denda?",
+    "❓ Lainnya": "Boleh dijelaskan lebih lanjut apa yang ingin kamu tanyakan?",
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -26,9 +36,20 @@ export default function ChatInterface() {
     if (!text.trim()) return;
 
     const userMessage = { id: Date.now().toString(), role: 'user' as const, text: text };
+    
+    // Check if it's a category click (initial options)
+    if (subQuestions[text]) {
+        setMessages(prev => [...prev, userMessage]);
+        
+        setActiveCategory(text);
+        const botMessageId = (Date.now() + 1).toString();
+        setMessages(prev => [...prev, { id: botMessageId, role: 'bot', text: subQuestions[text], isTyping: false }]);
+        return;
+    }
+
     setMessages(prev => [...prev, userMessage]);
     
-    if (userMessage.text === input) {
+    if (text === input) {
         setInput('');
     }
     setIsLoading(true);
@@ -38,7 +59,13 @@ export default function ChatInterface() {
     setMessages(prev => [...prev, { id: botMessageId, role: 'bot', text: '', isTyping: true }]);
 
     try {
-      const response = await chatWithBPJS(userMessage.text);
+      const context = activeCategory ? `Topik: ${activeCategory}. Pertanyaan user: ` : "";
+      const finalMessage = context + text;
+      
+      const response = await chatWithBPJS(finalMessage);
+      
+      setActiveCategory(null); // Reset category after getting a response
+
       setMessages(prev => prev.map(msg => 
         msg.id === botMessageId ? { ...msg, text: response, isTyping: false } : msg
       ));
@@ -84,12 +111,12 @@ export default function ChatInterface() {
                 >{linkify(mainContent)}</Markdown>
             </div>
             {followUp.length > 0 && (
-                <div className="flex flex-wrap gap-2 pt-2">
+                <div className="flex flex-col gap-2 pt-2">
                     {followUp.map((q, i) => (
                         <button
                             key={i}
                             onClick={() => handleSend(q)}
-                            className="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-xs px-3 py-1.5 rounded-full border border-emerald-200 transition"
+                            className="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-xs px-3 py-2 rounded-lg border border-emerald-200 transition text-left w-full"
                         >
                             {q}
                         </button>
